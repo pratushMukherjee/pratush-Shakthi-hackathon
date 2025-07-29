@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Knowledge Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f8f8;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 2px solid #000;
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .location-info {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            line-height: 1.3;
+        }
+
+        .main-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: #000;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-top: 5px;
+            color: #666;
+        }
+
+        .status-info {
+            text-align: right;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27ae60;
+            margin-left: 5px;
+        }
+
+        .status-indicator.offline {
+            background: #e74c3c;
+        }
+
+        .tagline {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            padding: 40px 0;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            margin-top: 120px;
+        }
+
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #ddd;
+            padding: 0;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            text-align: center;
+        }
+
+        .nav-tab {
+            padding: 15px 20px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-right: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-tab:last-child {
+            border-right: none;
+        }
+
+        .nav-tab.active {
+            background: #f0f0f0;
+        }
+
+        .nav-tab:hover {
+            background: #f8f8f8;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .chat-section {
+            background: white;
+            border: 1px solid #ddd;
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            background: #f8f8f8;
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .section-meta {
+            font-size: 11px;
+            color: #666;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+        }
+
+        .message {
+            margin-bottom: 30px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .message.user .message-content {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            border-color: #ddd;
+        }
+
+        .tools-used {
+            background: #f0f8ff;
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 11px;
+            color: #666;
+            letter-spacing: 0.5px;
+        }
+
+        .tool-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: #f8f8f8;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background: white;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #000;
+        }
+
+        .send-button {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: #333;
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upload-section {
+            background: white;
+            border: 1px solid #ddd;
+            margin-bottom: 40px;
+        }
+
+        .upload-content {
+            padding: 30px;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .upload-item h3 {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            background: white;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background: white;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .upload-button {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .upload-button:hover {
+            background: #333;
+        }
+
+        .upload-status {
+            margin-top: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border: 1px solid #ddd;
+            max-width: 70%;
+            margin-bottom: 20px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #666;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        .mode-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .mode-toggle {
+            background: transparent;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-toggle:hover {
+            background: #f8f8f8;
+        }
+
+        .fullscreen-toggle {
+            background: transparent;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-toggle:hover {
+            background: #f8f8f8;
+        }
+
+        .fullscreen .main-content {
+            max-width: 100%;
+            padding: 20px;
+        }
+
+        .fullscreen .header {
+            position: relative;
+        }
+
+        .fullscreen .tagline {
+            margin-top: 0;
+        }
+
+        .suggested-prompts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .suggested-prompt {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .suggested-prompt:hover {
+            background: #f8f8f8;
+        }
+
+        .predefined-button {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .predefined-button:hover {
+            background: #333;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .nav-content {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-input-container {
+                flex-direction: column;
+            }
+            
+            .send-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="location-info">
+                LOCALHOST:8058<br>
+                API ENDPOINT<br>
+                STREAMING ENABLED
+            </div>
+            <div>
+                <div class="main-title">R A G &nbsp; A S S I S T A N T</div>
+                <div class="subtitle">EST. 2026</div>
+            </div>
+            <div class="status-info">
+                STATUS: ONLINE
+                <div class="status-indicator" id="statusIndicator"></div>
+                <br>
+                SESSION: ACTIVE
+            </div>
+        </div>
+    </div>
+
+    <div class="tagline">
+        PROVIDING INTELLIGENT DOCUMENT ANALYSIS AND KNOWLEDGE RETRIEVAL
+    </div>
+
+    <div class="nav-tabs">
+        <div class="nav-content">
+            <div class="nav-tab active" data-tab="chat">CHAT</div>
+            <div class="nav-tab" data-tab="upload">UPLOAD</div>
+            <div class="nav-tab" data-tab="analysis">ANALYSIS</div>
+            <div class="nav-tab" data-tab="settings">SETTINGS</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="chat-section" id="chatSection">
+            <div class="section-header">
+                <div class="section-title">Knowledge Assistant Chat</div>
+                <div class="section-meta">
+                    <div class="mode-controls">
+                        <button class="mode-toggle" id="modeToggle">Streaming: ON</button>
+                        <button class="fullscreen-toggle" id="fullscreenToggle">FULLSCREEN</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-content">
+                        Hello! I'm your RAG Knowledge Assistant. I can help you search through documents, explore knowledge graphs, and answer questions about your data. I support both vector search and graph queries with real-time streaming responses.
+                        
+                        What would you like to know?
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <button id="predefinedPromptBtn" class="predefined-button">
+                    Get Resume Match Score
+                </button>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Ask me anything about your documents..." />
+                <button class="send-button" id="sendButton">Send</button>
+            </div>
+        </div>
+
+        <div class="upload-section" id="uploadSection" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">Document Upload</div>
+                <div class="section-meta">Format: Markdown (.md)</div>
+            </div>
+            
+            <div class="upload-content">
+                <div class="upload-grid">
+                    <div class="upload-item">
+                        <h3>Resume Upload</h3>
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <input type="file" class="file-input" id="resumeUpload" name="file" accept=".md" required>
+                            <button type="submit" class="upload-button">Upload and Ingest</button>
+                        </form>
+                        <div id="uploadStatus" class="upload-status"></div>
+                    </div>
+                    
+                    <div class="upload-item">
+                        <h3>Job Description</h3>
+                        <textarea id="jobDescInput" class="text-input" placeholder="Paste or write job description here..."></textarea>
+                        <button id="uploadJobDescBtn" class="upload-button">Upload & Ingest</button>
+                        <div id="jobDescUploadStatus" class="upload-status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadJobDescBtn').addEventListener('click', async () => {
+            const statusDiv = document.getElementById('jobDescUploadStatus');
+            const text = document.getElementById('jobDescInput').value.trim();
+
+            if (!text) {
+                statusDiv.textContent = 'Please enter a job description.';
+                statusDiv.style.color = 'red';
+                return;
+            }
+
+            statusDiv.textContent = 'Uploading and ingesting...';
+            statusDiv.style.color = 'black';
+
+            try {
+                const response = await fetch('http://localhost:8058/upload-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.textContent = `✅ Job description uploaded and saved as: ${result.filename}`;
+                    statusDiv.style.color = 'green';
+                    document.getElementById('jobDescInput').value = '';
+                    // Switch back to chat tab
+                    switchTab('chat');
+                } else {
+                    statusDiv.textContent = '❌ Upload failed: ' + (result.error || 'Unknown error');
+                    statusDiv.style.color = 'red';
+                }
+            } catch (err) {
+                statusDiv.textContent = '❌ Upload error: ' + err.message;
+                statusDiv.style.color = 'red';
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('resumeUpload');
+            const statusDiv = document.getElementById('uploadStatus');
+
+            if (!fileInput.files.length) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            statusDiv.textContent = 'Uploading and ingesting...';
+
+            try {
+                const response = await fetch('http://localhost:8058/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Upload and ingestion successful!';
+                    switchTab('chat');
+                } else {
+                    statusDiv.textContent = '❌ Error: ' + result.error;
+                }
+            } catch (err) {
+                statusDiv.textContent = '❌ Failed to upload: ' + err.message;
+            }
+        });
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            document.getElementById('chatSection').style.display = tabName === 'chat' ? 'block' : 'none';
+            document.getElementById('uploadSection').style.display = tabName === 'upload' ? 'block' : 'none';
+        }
+
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                switchTab(tab.dataset.tab);
+            });
+        });
+
+        class RAGChatbot {
+            constructor() {
+                this.apiUrl = 'http://localhost:8058';
+                this.sessionId = this.generateSessionId();
+                this.isStreaming = true;
+                this.searchType = 'hybrid';
+                this.isConnected = false;
+                
+                this.chatMessages = document.getElementById('chatMessages');
+                this.chatInput = document.getElementById('chatInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.modeToggle = document.getElementById('modeToggle');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                
+                this.setupEventListeners();
+                this.checkConnection();
+            }
+
+            generateSessionId() {
+                return crypto.randomUUID();
+            }
+
+            async checkConnection() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/health`);
+                    const health = await response.json();
+                    this.isConnected = response.ok && health.status === 'healthy';
+                } catch (error) {
+                    this.isConnected = false;
+                }
+                
+                this.updateStatusIndicator();
+            }
+
+            updateStatusIndicator() {
+                if (this.isConnected) {
+                    this.statusIndicator.className = 'status-indicator';
+                } else {
+                    this.statusIndicator.className = 'status-indicator offline';
+                }
+            }
+
+            setupEventListeners() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                this.fullscreenToggle = document.getElementById('fullscreenToggle');
+                this.fullscreenToggle.addEventListener('click', () => {
+                    document.body.classList.toggle('fullscreen');
+                    const isFullscreen = document.body.classList.contains('fullscreen');
+                    this.fullscreenToggle.textContent = isFullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+                });
+
+                this.modeToggle.addEventListener('click', () => this.toggleMode());
+
+                const predefinedBtn = document.getElementById('predefinedPromptBtn');
+                predefinedBtn.addEventListener('click', () => {
+                    const predefinedPrompt = "Analyze my resume and job description and give me a match score with a summary.";
+                    this.chatInput.value = predefinedPrompt;
+                    this.sendMessage();
+                });
+            }
+
+            toggleMode() {
+                this.isStreaming = !this.isStreaming;
+                this.modeToggle.textContent = `Streaming: ${this.isStreaming ? 'ON' : 'OFF'}`;
+            }
+
+            addMessage(content, isUser = false, toolsUsed = null, isError = false, sessionId = null) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+                
+                let messageContent = `<div class="message-content">${content}</div>`;
+                
+                if (toolsUsed && toolsUsed.length > 0) {
+                    const toolsHtml = toolsUsed.map(tool => {
+                        const argsText = tool.args && Object.keys(tool.args).length > 0
+                            ? `<span class="tool-args">${Object.entries(tool.args).map(([k, v]) => `${k}: ${v}`).join(', ')}</span>`
+                            : '';
+                        return `<div class="tool-item">
+                            <span class="tool-name">🔧 ${tool.tool_name}</span>
+                            ${argsText}
+                        </div>`;
+                    }).join('');
+                    messageContent += `<div class="tools-used">${toolsHtml}</div>`;
+                }
+
+                messageDiv.innerHTML = messageContent;
+
+                if (!isUser && this.chatMessages.querySelectorAll('.suggested-prompt').length === 0) {
+                    const suggestions = ['How can I improve this?', 'What skills am I missing?', 'Can you rewrite my resume for this job?'];
+
+                    const promptContainer = document.createElement('div');
+                    promptContainer.className = 'suggested-prompts';
+
+                    suggestions.forEach(text => {
+                        const btn = document.createElement('button');
+                        btn.textContent = text;
+                        btn.className = 'suggested-prompt';
+                        btn.addEventListener('click', () => {
+                            this.chatInput.value = text;
+                            this.sendMessage();
+                            promptContainer.remove();
+                        });
+                        promptContainer.appendChild(btn);
+                    });
+
+                    messageDiv.appendChild(promptContainer);
+                }
+                
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+                
+                return messageDiv;
+            }
+
+            showTypingIndicator() {
+                this.typingIndicator.style.display = 'block';
+                this.scrollToBottom();
+            }
+
+            hideTypingIndicator() {
+                this.typingIndicator.style.display = 'none';
+            }
+
+            scrollToBottom() {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            async sendMessage() {
+                const message = this.chatInput.value.trim();
+                if (!message) return;
+
+                this.addMessage(message, true);
+                this.chatInput.value = '';
+                this.sendButton.disabled = true;
+                this.sendButton.textContent = 'SENDING...';
+
+                try {
+                    if (this.isStreaming) {
+                        await this.sendStreamingMessage(message);
+                    } else {
+                        await this.sendRegularMessage(message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.addMessage(
+                        `Sorry, I encountered an error: ${error.message}. Please make sure the API server is running on ${this.apiUrl}`,
+                        false, null, true
+                    );
+                } finally {
+                    this.sendButton.disabled = false;
+                    this.sendButton.textContent = 'SEND';
+                    this.hideTypingIndicator();
+                    this.chatInput.focus();
+                }
+            }
+
+            async sendRegularMessage(message) {
+                this.showTypingIndicator();
+
+                const response = await fetch(`${this.apiUrl}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: this.sessionId,
+                        user_id: 'web_user',
+                        search_type: this.searchType,
+                        metadata: {
+                            interface: 'web',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                this.addMessage(data.message, false, data.tools_used, false, data.session_id);
+            }
+
+            async sendStreamingMessage(message) {
+                const response = await fetch(`${this.apiUrl}/chat/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: this.sessionId,
+                        user_id: 'web_user',
+                        search_type: this.searchType,
+                        metadata: {
+                            interface: 'web',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let messageDiv = null;
+                let currentContent = '';
+                let toolsUsed = [];
+                let currentSessionId = null;
+
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    
+                                    switch (data.type) {
+                                        case 'session':
+                                            currentSessionId = data.session_id;
+                                            break;
+                                            
+                                        case 'text':
+                                            if (!messageDiv) {
+                                                messageDiv = this.addMessage('', false);
+                                            }
+                                            currentContent += data.content;
+                                            const contentDiv = messageDiv.querySelector('.message-content');
+                                            contentDiv.textContent = currentContent;
+                                            this.scrollToBottom();
+                                            break;
+                                            
+                                        case 'tools':
+                                            toolsUsed = data.tools;
+                                            break;
+                                            
+                                        case 'end':
+                                            if (messageDiv && (toolsUsed.length > 0 || currentSessionId)) {
+                                                messageDiv.remove();
+                                                this.addMessage(currentContent, false, toolsUsed, false, currentSessionId);
+                                            }
+                                            break;
+                                            
+                                        case 'error':
+                                            this.addMessage(data.content, false, null, true);
+                                            break;
+                                    }
+                                } catch (parseError) {
+                                    console.error('Failed to parse SSE data:', parseError);
+                                }
+                            }
+                        }
+                    }
+                } finally {
+                    reader.releaseLock();
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            new RAGChatbot();
+        });
+    </script>
+</body>
+</html>
