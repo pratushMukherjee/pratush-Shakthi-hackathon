@@ -1,3 +1,5 @@
+The front end is written in vanilla html, css, javascript... right click on the frontend file and open with live server
+
 # Agentic RAG with Knowledge Graph
 
 Agentic knowledge retrieval redefined with an AI agent system that combines traditional RAG (vector search) with knowledge graph capabilities to analyze and provide insights about big tech companies and their AI initiatives. The system uses PostgreSQL with pgvector for semantic search and Neo4j with Graphiti for temporal knowledge graphs. The goal is to create Agentic RAG at its finest.
